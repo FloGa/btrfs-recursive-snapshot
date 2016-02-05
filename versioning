@@ -1,0 +1,25 @@
+#!/bin/bash
+
+smudge() {
+    local ahead=$(git describe --long | sed "s/[^-]*-//;s/-.*//")
+    local tag=$(git describe --abbrev=0)
+
+    for file in $(./bump files); do
+        sed -i "s/${tag}-dev\(\.[0-9]*\)*/${tag}-dev.${ahead}/" $file
+    done
+}
+
+clean() {
+    for file in $(./bump files); do
+        sed -i "s/\([0-9]\+.[0-9]\+.[0-9]\+-dev\)\(\.[0-9]*\)*/\1/" $file
+    done
+}
+
+case "$1" in
+    smudge)
+        smudge;;
+    clean)
+        clean;;
+    *)
+        exit 1;;
+esac
