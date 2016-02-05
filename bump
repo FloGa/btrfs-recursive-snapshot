@@ -1,0 +1,59 @@
+#!/bin/bash
+
+die() {
+    echo "ERROR: $@"
+    usage
+    exit 1
+}
+
+usage() {
+    echo "Usage: $(basename "$0") <action> <version>"
+    echo
+    echo "    Whereas <action> can be:"
+    echo "    version     do a version bump"
+    echo "    cycle       start a new cycle"
+}
+
+_prepend() {
+    local name=$1 text=$2
+    echo -e "$text" >"$name.2"
+    [ -f "$name" ] && cat "$name" >>"$name.2"
+    mv "$name.2" "$name"
+}
+
+version() {
+    [ -n "$1" ] && VERSION="$1" || die "No version string given."
+
+    echo $VERSION >VERSION
+
+    [ -f CHANGES.md ] && \
+        head -n1 CHANGES.md | grep -q "since" && \
+        sed -i "1,2d" CHANGES.md
+
+    [[ ! "$VERSION" =~ "dev" ]] && \
+        _prepend CHANGES.md "# Changes in $VERSION\n"
+}
+
+cycle() {
+    version "$1"
+    _prepend CHANGES.md "# Changes since latest release\n"
+}
+
+# --- Main --- #
+
+cd "$(dirname "$(readlink -e "$0")")"
+
+case $1 in
+    version)
+        version "$2"
+        ;;
+    cycle)
+        cycle "$2"
+        ;;
+    files)
+        echo "CHANGES.md VERSION"
+        ;;
+    *)
+        die "Unknown action."
+        ;;
+esac

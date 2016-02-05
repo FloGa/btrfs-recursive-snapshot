@@ -1,0 +1,76 @@
+#!/bin/bash
+
+snap() {
+    local vol="$(realpath $1)"
+    local snapdir="$2"
+
+    [ ! -d $snapdir ] && mkdir -v $snapdir
+
+    btrfs subvolume snapshot $vol $snapdir || exit $?
+
+    local realvol="$vol"
+    while ! btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' |
+        sed "s/<FS_TREE>\///" | sort | grep -q ^$realvol$
+    do
+        realvol=${realvol#*/}
+    done
+
+    local nested=$(
+    btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
+        sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort
+    )
+
+    local nvol
+    local target=${vol##*/}
+    for nvol in $nested; do
+        relapath=${nvol#$realvol/}
+        rmdir $snapdir/$target/$relapath
+        btrfs subvolume snapshot \
+            $vol/$relapath \
+            $snapdir/$target/$relapath
+    done
+}
+
+delete() {
+    local vol to_delete=""
+    for vol in "$@"; do
+        vol="$(realpath $vol)"
+
+        local realvol="$vol"
+        while ! btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' |
+            sed "s/<FS_TREE>\///" | sort | grep -q ^$realvol$
+        do
+            if [[ ! "$realvol" =~ "/" ]]; then
+                echo "Subvolume \"$vol\" not found. Exiting."
+                exit 1
+            fi
+            realvol=${realvol#*/}
+        done
+
+        local nested=$(
+        btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
+            sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort -r
+        )
+
+        local nvol
+        for nvol in $nested; do
+            to_delete="$to_delete $vol/${nvol#$realvol/}"
+        done
+
+        to_delete="$to_delete $vol"
+    done
+
+    btrfs subvolume delete $to_delete
+}
+
+while true; do
+    case "$1" in
+        -d)
+            shift
+            delete "$@"
+            break;;
+        *)
+            snap "$@"
+            break;;
+    esac
+done
