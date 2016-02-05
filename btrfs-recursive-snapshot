@@ -27,9 +27,7 @@ snap() {
     for nvol in $nested; do
         relapath=${nvol#$realvol/}
         rmdir $target/$relapath
-        btrfs subvolume snapshot \
-            $vol/$relapath \
-            $target/$relapath
+        btrfs subvolume snapshot $vol/$relapath $target/$relapath
     done
 }
 
