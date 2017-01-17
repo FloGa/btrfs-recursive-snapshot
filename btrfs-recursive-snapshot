@@ -55,11 +55,13 @@ delete() {
         local nvol
         for nvol in $nested; do
             to_delete="$to_delete $vol/${nvol#$realvol/}"
+            btrfs property set -ts $vol/${nvol#$realvol/} ro false
         done
 
         to_delete="$to_delete $vol"
     done
 
+    btrfs property set -ts $vol ro false
     btrfs subvolume delete $to_delete
 }
 
