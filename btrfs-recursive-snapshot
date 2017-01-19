@@ -60,9 +60,16 @@ delete() {
 
         to_delete="$to_delete $vol"
     done
-
-    btrfs property set -ts $vol ro false
-    btrfs subvolume delete $to_delete
+    
+    echo "btrfs subvolume delete $to_delete"
+    while true; do
+    read -p "Do you wont to execute this command?" yn
+    case $yn in
+        [Yy]* ) btrfs property set -ts $vol ro false; btrfs subvolume delete $to_delete; break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+    done
 }
 
 while true; do
