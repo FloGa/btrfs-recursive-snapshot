@@ -68,6 +68,7 @@ delete() {
     btrfs subvolume delete "${to_delete[@]}"
 }
 
+main() {
 while true; do
     case "$1" in
         -d)
@@ -79,3 +80,6 @@ while true; do
             break;;
     esac
 done
+}
+
+main "$@"
