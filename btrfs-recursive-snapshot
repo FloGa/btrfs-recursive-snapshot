@@ -58,7 +58,6 @@ delete() {
         local nvol
         for nvol in "${nested[@]}"; do
             to_delete+=("$vol/${nvol#$realvol/}")
-            btrfs property set -ts "$vol/${nvol#$realvol/}" ro false
         done
 
         to_delete+=("$vol")
@@ -77,7 +76,9 @@ delete() {
     fi
     fi
 
-    btrfs property set -ts "$vol" ro false
+    for nvol in "${to_delete[@]}" "$vol"; do
+        btrfs property set -ts "$nvol" ro false
+    done
     btrfs subvolume delete "${to_delete[@]}"
 }
 
