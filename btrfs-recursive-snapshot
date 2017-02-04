@@ -1,71 +1,74 @@
 #!/bin/bash
 
 snap() {
-    local vol="$(realpath $1)"
-    local target="$2"
+    local vol target
+    vol="$(readlink -e "$1")"
+    target="$2"
 
-    if [ -d $target ]; then
+    if [ -e "$target" ]; then
         echo "Target \"$target\" already exists. Exiting."
         exit 1
     fi
 
-    btrfs subvolume snapshot $vol $target || exit $?
+    btrfs subvolume snapshot "$vol" "$target" || exit $?
 
     local realvol="$vol"
-    while ! btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' |
-        sed "s/<FS_TREE>\///" | sort | grep -q ^$realvol$
+    while ! btrfs subvolume list -at "$vol" | tail -n+3 | cut -f5- |
+        sed "s/<FS_TREE>\///" | sort | grep -q "^$realvol\$"
     do
-        realvol=${realvol#*/}
+        realvol="${realvol#*/}"
     done
 
-    local nested=$(
-    btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
-        sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort
+    local nested
+    readarray -t nested < <(
+    btrfs subvolume list -at "$vol" | tail -n+3 | cut -f5- | \
+        sed "s/<FS_TREE>\///" | grep "^$realvol/" | sort
     )
 
     local nvol
-    for nvol in $nested; do
-        relapath=${nvol#$realvol/}
-        rmdir $target/$relapath
-        btrfs subvolume snapshot $vol/$relapath $target/$relapath
+    for nvol in "${nested[@]}"; do
+        relapath="${nvol#$realvol/}"
+        rmdir "$target/$relapath"
+        btrfs subvolume snapshot "$vol/$relapath" "$target/$relapath"
     done
 }
 
 delete() {
-    local vol to_delete=""
+    local vol to_delete=()
     for vol in "$@"; do
-        vol="$(realpath $vol)"
+        vol="$(realpath "$vol")"
 
         local realvol="$vol"
-        while ! btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' |
-            sed "s/<FS_TREE>\///" | sort | grep -q ^$realvol$
+        while ! btrfs subvolume list -at "$vol" | tail -n+3 | cut -f5- |
+            sed "s/<FS_TREE>\///" | sort | grep -q "^$realvol\$"
         do
             if [[ ! "$realvol" =~ "/" ]]; then
                 echo "Subvolume \"$vol\" not found. Exiting."
                 exit 1
             fi
-            realvol=${realvol#*/}
+            realvol="${realvol#*/}"
         done
 
-        local nested=$(
-        btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
-            sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort -r
+        local nested
+        readarray -t nested < <(
+        btrfs subvolume list -at "$vol" | tail -n+3 | cut -f5- | \
+            sed "s/<FS_TREE>\///" | grep "^$realvol/" | sort -r
         )
 
         local nvol
-        for nvol in $nested; do
-            to_delete="$to_delete $vol/${nvol#$realvol/}"
-            btrfs property set -ts $vol/${nvol#$realvol/} ro false
+        for nvol in "${nested[@]}"; do
+            to_delete+=("$vol/${nvol#$realvol/}")
+            btrfs property set -ts "$vol/${nvol#$realvol/}" ro false
         done
 
-        to_delete="$to_delete $vol"
+        to_delete+=("$vol")
     done
     
-    echo "btrfs subvolume delete $to_delete"
+    echo "btrfs subvolume delete ${to_delete[*]}"
     while true; do
     read -p "Do you wont to execute this command?" yn
     case $yn in
-        [Yy]* ) btrfs property set -ts $vol ro false; btrfs subvolume delete $to_delete; break;;
+        [Yy]* ) btrfs property set -ts "$vol" ro false; btrfs subvolume delete "${to_delete[@]}"; break;;
         [Nn]* ) exit;;
         * ) echo "Please answer yes or no.";;
     esac
