@@ -69,17 +69,25 @@ delete() {
 }
 
 main() {
+    local delete
+
 while true; do
     case "$1" in
         -d)
             shift
-            delete "$@"
-            break;;
+            delete=1
+            ;;
         *)
-            snap "$@"
-            break;;
+            break
+            ;;
     esac
 done
+
+    if [ "$delete" ]; then
+        delete "$@"
+    else
+        snap "$@"
+    fi
 }
 
 main "$@"
