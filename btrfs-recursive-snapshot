@@ -1,8 +1,9 @@
 #!/bin/bash
 
 snap() {
-    local vol="$(realpath $1)"
-    local target="$2"
+    local vol target
+    vol="$(readlink -e "$1")"
+    target="$2"
 
     if [ -d $target ]; then
         echo "Target \"$target\" already exists. Exiting."
@@ -18,7 +19,8 @@ snap() {
         realvol=${realvol#*/}
     done
 
-    local nested=$(
+    local nested
+    nested=$(
     btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
         sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort
     )
@@ -47,7 +49,8 @@ delete() {
             realvol=${realvol#*/}
         done
 
-        local nested=$(
+        local nested
+        nested=$(
         btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
             sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort -r
         )
