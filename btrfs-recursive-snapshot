@@ -64,8 +64,11 @@ delete() {
         to_delete+=("$vol")
     done
 
-    echo "btrfs subvolume delete ${to_delete[*]}"
-    read -p "Do you wont to execute this command (y|N)?" yn
+    printf -v to_delete_output ', "%s"' "${to_delete[@]}"
+    echo "The following subvolumes will be deleted, in this order:"
+    echo "${to_delete_output:2}"
+    echo
+    read -rp "Do you really want to continue (y|N)? " yn
     if [[ "$yn" = [Yy] ]]; then
             btrfs property set -ts "$vol" ro false
             btrfs subvolume delete "${to_delete[@]}"
