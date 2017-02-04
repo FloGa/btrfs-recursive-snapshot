@@ -5,7 +5,7 @@ snap() {
     vol="$(readlink -e "$1")"
     target="$2"
 
-    if [ -d $target ]; then
+    if [ -e "$target" ]; then
         echo "Target \"$target\" already exists. Exiting."
         exit 1
     fi
