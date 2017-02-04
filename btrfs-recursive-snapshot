@@ -63,7 +63,7 @@ delete() {
 
         to_delete+=("$vol")
     done
-    
+
     echo "btrfs subvolume delete ${to_delete[*]}"
     while true; do
     read -p "Do you wont to execute this command?" yn
