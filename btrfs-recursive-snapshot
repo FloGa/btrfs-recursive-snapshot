@@ -78,14 +78,26 @@ delete() {
     fi
 }
 
-while true; do
-    case "$1" in
-        -d)
-            shift
-            delete "$@"
-            break;;
-        *)
-            snap "$@"
-            break;;
-    esac
-done
+main() {
+    local delete
+
+    while true; do
+        case "$1" in
+            -d)
+                shift
+                delete=1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if [ "$delete" ]; then
+        delete "$@"
+    else
+        snap "$@"
+    fi
+}
+
+main "$@"
