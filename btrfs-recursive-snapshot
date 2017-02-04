@@ -13,7 +13,7 @@ snap() {
     btrfs subvolume snapshot $vol $target || exit $?
 
     local realvol="$vol"
-    while ! btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' |
+    while ! btrfs subvolume list -at "$vol" | tail -n+3 | awk '{print $4}' |
         sed "s/<FS_TREE>\///" | sort | grep -q ^$realvol$
     do
         realvol=${realvol#*/}
@@ -21,7 +21,7 @@ snap() {
 
     local nested
     nested=$(
-    btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
+    btrfs subvolume list -at "$vol" | tail -n+3 | awk '{print $4}' | \
         sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort
     )
 
@@ -39,7 +39,7 @@ delete() {
         vol="$(realpath $vol)"
 
         local realvol="$vol"
-        while ! btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' |
+        while ! btrfs subvolume list -at "$vol" | tail -n+3 | awk '{print $4}' |
             sed "s/<FS_TREE>\///" | sort | grep -q ^$realvol$
         do
             if [[ ! "$realvol" =~ "/" ]]; then
@@ -51,7 +51,7 @@ delete() {
 
         local nested
         nested=$(
-        btrfs subvolume list -at / | tail -n+3 | awk '{print $4}' | \
+        btrfs subvolume list -at "$vol" | tail -n+3 | awk '{print $4}' | \
             sed "s/<FS_TREE>\///" | grep ^$realvol/ | sort -r
         )
 
