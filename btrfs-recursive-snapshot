@@ -64,16 +64,16 @@ delete() {
     done
 
     if [ "$interactive" ]; then
-    local to_delete_output yn
-    printf -v to_delete_output ', "%s"' "${to_delete[@]}"
-    echo "The following subvolumes will be deleted, in this order:"
-    echo "${to_delete_output:2}"
-    echo
-    read -rp "Do you really want to continue (y|N)? " yn
-    if [[ "$yn" != [Yy] ]]; then
-        echo "Deletion aborted."
-        return 1
-    fi
+        local to_delete_output yn
+        printf -v to_delete_output ', "%s"' "${to_delete[@]}"
+        echo "The following subvolumes will be deleted, in this order:"
+        echo "${to_delete_output:2}"
+        echo
+        read -rp "Do you really want to continue (y|N)? " yn
+        if [[ "$yn" != [Yy] ]]; then
+            echo "Deletion aborted."
+            return 1
+        fi
     fi
 
     for nvol in "${to_delete[@]}" "$vol"; do
