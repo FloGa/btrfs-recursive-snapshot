@@ -64,6 +64,7 @@ delete() {
         to_delete+=("$vol")
     done
 
+    if [ "$interactive" ]; then
     local to_delete_output yn
     printf -v to_delete_output ', "%s"' "${to_delete[@]}"
     echo "The following subvolumes will be deleted, in this order:"
@@ -74,19 +75,24 @@ delete() {
         echo "Deletion aborted."
         return 1
     fi
+    fi
 
     btrfs property set -ts "$vol" ro false
     btrfs subvolume delete "${to_delete[@]}"
 }
 
 main() {
-    local delete
+    local delete interactive
 
     while true; do
         case "$1" in
             -d)
                 shift
                 delete=1
+                ;;
+            -i)
+                shift
+                interactive=1
                 ;;
             *)
                 break
