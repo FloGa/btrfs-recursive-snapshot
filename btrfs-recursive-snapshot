@@ -58,24 +58,42 @@ delete() {
         local nvol
         for nvol in "${nested[@]}"; do
             to_delete+=("$vol/${nvol#$realvol/}")
-            btrfs property set -ts "$vol/${nvol#$realvol/}" ro false
         done
 
         to_delete+=("$vol")
     done
 
-    btrfs property set -ts "$vol" ro false
+    if [ "$interactive" ]; then
+        local to_delete_output yn
+        printf -v to_delete_output ', "%s"' "${to_delete[@]}"
+        echo "The following subvolumes will be deleted, in this order:"
+        echo "${to_delete_output:2}"
+        echo
+        read -rp "Do you really want to continue (y|N)? " yn
+        if [[ "$yn" != [Yy] ]]; then
+            echo "Deletion aborted."
+            return 1
+        fi
+    fi
+
+    for nvol in "${to_delete[@]}" "$vol"; do
+        btrfs property set -ts "$nvol" ro false
+    done
     btrfs subvolume delete "${to_delete[@]}"
 }
 
 main() {
-    local delete
+    local delete interactive
 
     while true; do
         case "$1" in
             -d)
                 shift
                 delete=1
+                ;;
+            -i)
+                shift
+                interactive=1
                 ;;
             *)
                 break
