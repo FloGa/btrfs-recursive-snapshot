@@ -64,6 +64,7 @@ delete() {
         to_delete+=("$vol")
     done
 
+    local to_delete_output yn
     printf -v to_delete_output ', "%s"' "${to_delete[@]}"
     echo "The following subvolumes will be deleted, in this order:"
     echo "${to_delete_output:2}"
