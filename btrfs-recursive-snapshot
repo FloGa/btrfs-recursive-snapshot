@@ -4,7 +4,7 @@ snap() {
     local vol="$(realpath $1)"
     local target="$2"
 
-    if [ -d $target ]; then
+    if [ -e "$target" ]; then
         echo "Target \"$target\" already exists. Exiting."
         exit 1
     fi
