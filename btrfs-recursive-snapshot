@@ -28,6 +28,21 @@ snap() {
     local nvol
     for nvol in "${nested[@]}"; do
         relapath="${nvol#$realvol/}"
+
+        local exclude_match=
+        for exclude in "${excludes[@]}"; do
+            # "exclude" can contain patterns, so do not quote!
+            # shellcheck disable=SC2053
+            if [[ "/$relapath/" = ${exclude%/}/* ]]; then
+                exclude_match=1
+                break
+            fi
+        done
+
+        if [ "$exclude_match" ]; then
+            continue
+        fi
+
         rmdir "$target/$relapath"
         btrfs subvolume snapshot "$vol/$relapath" "$target/$relapath"
     done
@@ -84,6 +99,7 @@ delete() {
 
 main() {
     local delete interactive
+    local excludes=()
 
     while true; do
         case "$1" in
@@ -94,6 +110,11 @@ main() {
             -i)
                 shift
                 interactive=1
+                ;;
+            -e | --exclude)
+                shift
+                excludes+=("$1")
+                shift
                 ;;
             *)
                 break
