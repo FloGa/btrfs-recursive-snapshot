@@ -1,3 +1,20 @@
+# Changes in 0.4.0
+
+-   Support excludes for snapshotting
+
+    There might be situations, where one does not want to snapshot a
+    complete directory tree. For these cases, we now support excludes with
+    the `--exclude` flag. The argument to this flag is interpreted as a Bash
+    glob and will be matched against every subvolume that is about to be
+    snapshotted. If there is a match, the subvolume in question and every
+    subvolume beneath it will not be snapshotted.
+
+    This flag can be used multiple times, every glob will be tried
+    individually on each subvolume.
+
+    Note that this flag has no effect in a delete operation and will
+    silently be ignored there.
+
 # Changes in 0.3.0
 
 -   Make subvolumes writable upon deletion
